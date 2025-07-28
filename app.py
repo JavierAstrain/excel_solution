@@ -9,7 +9,7 @@ st.markdown("¡Hola! Soy tu asistente personal para Excel. Describe tu problema 
 
 # Área de texto para que el usuario ingrese su problema
 user_problem = st.text_area(
-    "Describe tu problema en Excel (ej: 'Necesito sumar los valores de la columna B si la columna A contiene "Ventas" y la columna C es mayor a 100.')",
+    "Describe tu problema en Excel (ej: 'Necesito sumar los valores de la columna B si la columna A contiene \"Ventas\" y la columna C es mayor a 100.')",
     height=150,
     placeholder="Ejemplo: Quiero encontrar el valor máximo en la columna D para las filas donde la columna E sea 'Activo'."
 )
@@ -49,23 +49,31 @@ if st.button("Obtener Solución de Excel"):
         try:
             # Llamada a la API de Gemini para generar la respuesta
             chatHistory = []
-            chatHistory.append({"role": "user", "parts": [{"text": prompt}]})
+            chatHistory.push({"role": "user", "parts": [{"text": prompt}]})
             payload = {"contents": chatHistory}
             apiKey = "" # La clave API se proporcionará en tiempo de ejecución por Canvas
             apiUrl = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}"
 
-            response = st.cache_data(lambda p, a: st.experimental_singleton(lambda: fetch(p, a))())(payload, apiUrl)
+            # La función `fetch` se ejecuta en el entorno de Canvas, no necesita ser definida aquí.
+            # `st.cache_data` y `st.experimental_singleton` son para optimizar en Streamlit.
+            response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            result = await response.json();
+
 
             # Verificar si la respuesta es exitosa y contiene contenido
-            if response and response.candidates and len(response.candidates) > 0 and \
-               response.candidates[0].content and response.candidates[0].content.parts and \
-               len(response.candidates[0].content.parts) > 0:
-                ai_response_text = response.candidates[0].content.parts[0].text
+            if result.candidates and len(result.candidates) > 0 and \
+               result.candidates[0].content and result.candidates[0].content.parts and \
+               len(result.candidates[0].content.parts) > 0:
+                ai_response_text = result.candidates[0].content.parts[0].text
                 st.subheader("💡 Solución Propuesta:")
                 st.markdown(ai_response_text)
             else:
                 st.error("Lo siento, no pude generar una solución en este momento. Por favor, intenta de nuevo.")
-                st.json(response) # Para depuración, mostrar la respuesta completa si falla
+                st.json(result) # Para depuración, mostrar la respuesta completa si falla
 
         except Exception as e:
             st.error(f"Ocurrió un error al comunicarse con la IA: {e}")
@@ -75,20 +83,3 @@ if st.button("Obtener Solución de Excel"):
 
 st.markdown("---")
 st.markdown("Este asistente utiliza inteligencia artificial para ayudarte con tus tareas de Excel.")
-
-# Función de fetch para la API de Gemini (simulada para Streamlit)
-# En un entorno real de Streamlit, esta función debería estar en el backend
-# o manejada de forma segura para evitar exponer la clave API en el frontend.
-# Para este entorno de Canvas, la clave API se inyecta automáticamente.
-async def fetch(payload, apiUrl):
-    # Esta es una simulación. En un entorno real, usarías requests o aiohttp
-    # para hacer la llamada HTTP. Aquí, Streamlit se encarga de la ejecución
-    # del código Python, y la plataforma de Canvas inyecta la clave API.
-    # El `st.experimental_singleton` y `st.cache_data` son para optimizar
-    # las llamadas en Streamlit, evitando re-ejecuciones innecesarias.
-    # La llamada real a la API se maneja internamente por el entorno de Canvas.
-    # Por lo tanto, no se necesita un `requests.post` explícito aquí.
-    # El `fetch` en el prompt de Gemini es una instrucción para el modelo,
-    # no un método Python literal que necesitemos implementar.
-    # Para que funcione en Canvas, la llamada `fetch` se resuelve automáticamente.
-    pass # La lógica de fetch se maneja fuera de este bloque de código Python visible.
