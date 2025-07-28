@@ -1,5 +1,6 @@
 import streamlit as st
 import json
+import requests # Importar la librería requests
 
 # Título de la aplicación
 st.set_page_config(page_title="Asistente de Fórmulas Excel con IA", layout="centered")
@@ -49,26 +50,24 @@ if st.button("Obtener Solución de Excel"):
         try:
             # Llamada a la API de Gemini para generar la respuesta
             chatHistory = []
-            chatHistory.push({"role": "user", "parts": [{"text": prompt}]})
+            chatHistory.append({"role": "user", "parts": [{"text": prompt}]}) # Usar .append para listas de Python
             payload = {"contents": chatHistory}
             apiKey = "" # La clave API se proporcionará en tiempo de ejecución por Canvas
             apiUrl = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}"
 
-            # La función `fetch` se ejecuta en el entorno de Canvas, no necesita ser definida aquí.
-            # `st.cache_data` y `st.experimental_singleton` son para optimizar en Streamlit.
-            response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            result = await response.json();
-
+            # Realizar la llamada HTTP síncrona usando requests
+            response = requests.post(
+                apiUrl,
+                headers={'Content-Type': 'application/json'},
+                data=json.dumps(payload)
+            )
+            result = response.json() # Obtener el JSON de la respuesta
 
             # Verificar si la respuesta es exitosa y contiene contenido
-            if result.candidates and len(result.candidates) > 0 and \
-               result.candidates[0].content and result.candidates[0].content.parts and \
-               len(result.candidates[0].content.parts) > 0:
-                ai_response_text = result.candidates[0].content.parts[0].text
+            if result.get("candidates") and len(result["candidates"]) > 0 and \
+               result["candidates"][0].get("content") and result["candidates"][0]["content"].get("parts") and \
+               len(result["candidates"][0]["content"]["parts"]) > 0:
+                ai_response_text = result["candidates"][0]["content"]["parts"][0]["text"]
                 st.subheader("💡 Solución Propuesta:")
                 st.markdown(ai_response_text)
             else:
@@ -83,3 +82,4 @@ if st.button("Obtener Solución de Excel"):
 
 st.markdown("---")
 st.markdown("Este asistente utiliza inteligencia artificial para ayudarte con tus tareas de Excel.")
+
