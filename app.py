@@ -52,7 +52,10 @@ if st.button("Obtener Solución de Excel"):
             chatHistory = []
             chatHistory.append({"role": "user", "parts": [{"text": prompt}]}) # Usar .append para listas de Python
             payload = {"contents": chatHistory}
-            apiKey = "" # La clave API se proporcionará en tiempo de ejecución por Canvas
+            # La clave API se proporciona en tiempo de ejecución por el entorno de Canvas.
+            # El error "PERMISSION_DENIED" sugiere un problema con la configuración del entorno
+            # o los permisos de la clave API, no con el código en sí.
+            apiKey = ""
             apiUrl = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}"
 
             # Realizar la llamada HTTP síncrona usando requests
@@ -82,4 +85,3 @@ if st.button("Obtener Solución de Excel"):
 
 st.markdown("---")
 st.markdown("Este asistente utiliza inteligencia artificial para ayudarte con tus tareas de Excel.")
-
