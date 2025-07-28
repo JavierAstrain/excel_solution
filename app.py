@@ -1,6 +1,6 @@
 import streamlit as st
 import json
-import requests # Importar la librería requests
+import requests
 
 # Título de la aplicación
 st.set_page_config(page_title="Asistente de Fórmulas Excel con IA", layout="centered")
@@ -19,6 +19,15 @@ user_problem = st.text_area(
 if st.button("Obtener Solución de Excel"):
     if user_problem:
         st.info("Generando solución... Por favor, espera.")
+
+        # Obtener la clave de API de Gemini desde Streamlit secrets
+        # Asegúrate de que GEMINI_API_KEY esté definida en tu archivo secrets.toml
+        try:
+            apiKey = st.secrets["GEMINI_API_KEY"]
+        except KeyError:
+            st.error("Error: La clave 'GEMINI_API_KEY' no se encontró en tus secrets de Streamlit. "
+                     "Por favor, asegúrate de haber configurado el archivo .streamlit/secrets.toml correctamente.")
+            st.stop() # Detiene la ejecución de la aplicación si la clave no se encuentra
 
         # Construir el prompt para la IA
         prompt = f"""
@@ -50,12 +59,8 @@ if st.button("Obtener Solución de Excel"):
         try:
             # Llamada a la API de Gemini para generar la respuesta
             chatHistory = []
-            chatHistory.append({"role": "user", "parts": [{"text": prompt}]}) # Usar .append para listas de Python
+            chatHistory.append({"role": "user", "parts": [{"text": prompt}]})
             payload = {"contents": chatHistory}
-            # La clave API se proporciona en tiempo de ejecución por el entorno de Canvas.
-            # El error "PERMISSION_DENIED" sugiere un problema con la configuración del entorno
-            # o los permisos de la clave API, no con el código en sí.
-            apiKey = ""
             apiUrl = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}"
 
             # Realizar la llamada HTTP síncrona usando requests
@@ -85,3 +90,4 @@ if st.button("Obtener Solución de Excel"):
 
 st.markdown("---")
 st.markdown("Este asistente utiliza inteligencia artificial para ayudarte con tus tareas de Excel.")
+
